@@ -9,8 +9,8 @@ namespace SamosaGhar.Config
         // Constructor to accept connection string and database name
         public MongoDBConfig(string connectionString, string databaseName)
         {
-            var client = new MongoClient(connectionString); // Initialize the MongoDB client
-            _database = client.GetDatabase(databaseName);   // Get the specified database
+            var client = new MongoClient(connectionString); 
+            _database = client.GetDatabase(databaseName);   
         }
 
         // Generic method to get a collection from the database
