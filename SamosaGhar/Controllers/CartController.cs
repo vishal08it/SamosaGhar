@@ -12,7 +12,7 @@ namespace SamosaGhar.Controllers
     {
         private readonly IMongoCollection<CartItem> _cartItems;
 
-        // Constructor using Dependency Injection
+        
         public CartController(MongoDBConfig dbConfig)
         {
             _cartItems = dbConfig.GetCollection<CartItem>("CartItems");
@@ -21,6 +21,9 @@ namespace SamosaGhar.Controllers
         [HttpPost("add")]
         public IActionResult AddToCart([FromBody] CartItem cartItem)
         {
+            
+            cartItem.Id = Guid.NewGuid().ToString(); 
+
             _cartItems.InsertOne(cartItem);
             return Ok(new { message = "Item added to cart" });
         }
@@ -38,6 +41,7 @@ namespace SamosaGhar.Controllers
             _cartItems.DeleteMany(_ => true);
             return Ok(new { message = "Cart cleared" });
         }
+
     }
 }
 

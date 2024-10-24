@@ -1,4 +1,73 @@
-﻿using MongoDB.Driver;
+﻿
+//using MongoDB.Driver;
+
+//namespace SamosaGhar.Config
+//{
+//    public class MongoDBConfig
+//    {
+//        private readonly IMongoDatabase _database;
+
+//        public MongoDBConfig(string connectionString, string databaseName)
+//        {
+//            var client = new MongoClient(connectionString);
+//            _database = client.GetDatabase(databaseName);
+//        }
+
+//        public IMongoCollection<T> GetCollection<T>(string name)
+//        {
+//            return _database.GetCollection<T>(name);
+//        }
+//    }
+//}
+//using MongoDB.Driver;
+
+//namespace SamosaGhar.Config
+//{
+//    public class MongoDBConfig
+//    {
+//        private readonly IMongoDatabase _database;
+
+//        public MongoDBConfig(string connectionString, string databaseName)
+//        {
+//            var client = new MongoClient(connectionString);
+//            _database = client.GetDatabase(databaseName);
+//        }
+
+//        public IMongoCollection<T> GetCollection<T>(string name)
+//        {
+//            return _database.GetCollection<T>(name);
+//        }
+//    }
+//}
+
+//using Microsoft.Extensions.Configuration;
+//using MongoDB.Driver;
+
+//namespace SamosaGhar.Config
+//{
+//    public class MongoDBConfig
+//    {
+//        private readonly IMongoDatabase _database;
+
+//        public MongoDBConfig(IConfiguration configuration)
+//        {
+//            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+
+//            var connectionString = configuration[$"MongoDB:{environment}:ConnectionString"];
+//            var databaseName = configuration[$"MongoDB:{environment}:DatabaseName"];
+
+//            var client = new MongoClient(connectionString);
+//            _database = client.GetDatabase(databaseName);
+//        }
+
+//        public IMongoCollection<T> GetCollection<T>(string name)
+//        {
+//            return _database.GetCollection<T>(name);
+//        }
+//    }
+//}
+using Microsoft.Extensions.Configuration;
+using MongoDB.Driver;
 
 namespace SamosaGhar.Config
 {
@@ -6,17 +75,30 @@ namespace SamosaGhar.Config
     {
         private readonly IMongoDatabase _database;
 
-        // Constructor to accept connection string and database name
-        public MongoDBConfig(string connectionString, string databaseName)
+        public MongoDBConfig(IConfiguration config, IWebHostEnvironment env)
         {
-            var client = new MongoClient(connectionString); 
-            _database = client.GetDatabase(databaseName);   
+            string connectionString;
+            string databaseName;
+
+            if (env.IsDevelopment())
+            {
+                connectionString = config.GetSection("MongoDB:Development:ConnectionString").Value;
+                databaseName = config.GetSection("MongoDB:Development:DatabaseName").Value;
+            }
+            else
+            {
+                connectionString = config.GetSection("MongoDB:Production:ConnectionString").Value;
+                databaseName = config.GetSection("MongoDB:Production:DatabaseName").Value;
+            }
+
+            var client = new MongoClient(connectionString);
+            _database = client.GetDatabase(databaseName);
         }
 
-        // Generic method to get a collection from the database
-        public IMongoCollection<T> GetCollection<T>(string name)
+        public IMongoCollection<T> GetCollection<T>(string collectionName)
         {
-            return _database.GetCollection<T>(name); 
+            return _database.GetCollection<T>(collectionName);
         }
     }
 }
+
