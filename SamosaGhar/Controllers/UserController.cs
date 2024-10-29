@@ -71,7 +71,10 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using SamosaGhar.Config;
 using SamosaGhar.Models;
+using System.Net.Mail;
+using System.Net;
 using System.Threading.Tasks;
+
 
 namespace SamosaGhar.Controllers
 {
@@ -87,7 +90,7 @@ namespace SamosaGhar.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] User loginUser)
+        public async Task<IActionResult> Login([FromBody] LoginRequest loginUser)
         {
             if (string.IsNullOrEmpty(loginUser.MobileNumber) || string.IsNullOrEmpty(loginUser.Password))
             {
@@ -104,17 +107,88 @@ namespace SamosaGhar.Controllers
             return Ok(new { message = "Login successful", user = user });
         }
 
-        [HttpPost("register")]
-        public IActionResult Register([FromBody] User newUser)
-        {
-            var existingUser = _users.Find(u => u.MobileNumber == newUser.MobileNumber).FirstOrDefault();
-            if (existingUser != null)
-            {
-                return Conflict(new { message = "User already exists" });
-            }
+        //[HttpPost("register")]
+        //public IActionResult Register([FromBody] User newUser)
+        //{
+        //    var existingUser = _users.Find(u => u.MobileNumber == newUser.MobileNumber).FirstOrDefault();
+        //    if (existingUser != null)
+        //    {
+        //        return Conflict(new { message = "User already exists" });
+        //    }
 
-            _users.InsertOne(newUser);
-            return Ok(new { message = "User registered successfully" });
+        //    _users.InsertOne(newUser);
+        //    return Ok(new { message = "User registered successfully" });
+        //}
+        
+
+
+[HttpPost("register")]
+    public IActionResult Register([FromBody] User newUser)
+    {
+        // Validate required fields
+        if (string.IsNullOrEmpty(newUser.Name) ||
+            string.IsNullOrEmpty(newUser.MobileNumber) ||
+            string.IsNullOrEmpty(newUser.Email) ||
+            string.IsNullOrEmpty(newUser.Password))
+        {
+            return BadRequest(new { message = "All fields (Name, Phone, Email, Password) are required." });
         }
-    }
+
+        // Check if user already exists
+        var existingUser = _users.Find(u => u.MobileNumber == newUser.MobileNumber).FirstOrDefault();
+        if (existingUser != null)
+        {
+            return Conflict(new { message = "User already exists" });
+        }
+
+        // Insert new user into the database
+        _users.InsertOne(newUser);
+
+            // Send email to the newly registered user
+            //try
+            //{
+            //    SendRegistrationEmail(newUser.Email, newUser.Name, newUser.Password, newUser.MobileNumber);
+            //}
+            //catch (Exception ex)
+            //{
+            //    // Handle email sending failure, but still return success for user registration
+            //    return Ok(new { message = "User registered successfully, but failed to send email.", error = ex.Message });
+            //}
+
+            // Return success response
+            //return Ok(new { message = "User registered successfully and check email ." });
+            return Ok(new { message = "User registered successfully ." });
+        }
+
+    //private void SendRegistrationEmail(string userEmail, string userName, string userPassword, string userMobileNumber)
+    //{
+    //    // Gmail SMTP settings
+    //    var smtpClient = new SmtpClient("smtp.gmail.com")
+    //    {
+    //        Port = 587,
+    //        Credentials = new NetworkCredential("samosaghar86@gmail.com", "your-app-password-here"),
+    //        EnableSsl = true,
+    //    };
+
+    //    // Email content
+    //    var mailMessage = new MailMessage
+    //    {
+    //        From = new MailAddress("samosaghar86@gmail.com"),
+    //        Subject = "Registration Successful - Samosa Ghar",
+    //        Body = $"Hello {userName},\n\nThank you for registering at Samosa Ghar!\n" +
+    //               $"Your login details are as follows:\n\n" +
+    //               $"Mobile Number: {userMobileNumber}\n" +  
+    //               $"Password: {userPassword}\n\n" +
+    //               "We recommend changing your password after your first login.\n\n" +
+    //               "Best Regards,\nSamosa Ghar Team",
+    //        IsBodyHtml = false,
+    //    };
+
+    //    mailMessage.To.Add(userEmail);
+
+    //    // Send email
+    //    smtpClient.Send(mailMessage);
+    //}
+
+}
 }

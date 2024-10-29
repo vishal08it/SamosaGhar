@@ -1,45 +1,3 @@
-﻿//{
-//  "profiles": {
-//    "SamosaGhar": {
-//      "commandName": "Project",
-//      "dotnetRunMessages": true,
-//      "launchBrowser": true,
-//      "applicationUrl": "http://localhost:7200",
-//      "environmentVariables": {
-//        "ASPNETCORE_ENVIRONMENT": "Development"
-//      }
-//    }
-//  }
-//}
-//{
-//  "profiles": {
-//    "IIS Express": {
-//      "commandName": "IISExpress",
-//      "launchBrowser": true,
-//      "environmentVariables": {
-//        "ASPNETCORE_ENVIRONMENT": "Development"
-//      }
-//    },
-//    "SamosaGhar": {
-//      "commandName": "Project",
-//      "dotnetRunMessages": true,
-//      "launchBrowser": true,
-//      "applicationUrl": "http://localhost:7200", // Local URL
-//      "environmentVariables": {
-//        "ASPNETCORE_ENVIRONMENT": "Development"
-//      }
-//    },
-//    "SamosaGhar_Live": {
-//      "commandName": "Project",
-//      "dotnetRunMessages": true,
-//      "launchBrowser": true,
-//      "applicationUrl": "https://samosagharlive.com", // Live URL for testing
-//      "environmentVariables": {
-//        "ASPNETCORE_ENVIRONMENT": "Production"
-//      }
-//    }
-//  }
-//}
 {
   "profiles": {
     "IIS Express": {
@@ -49,23 +7,31 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    //"SamosaGhar": {
-    //  "commandName": "Project",
-    //  "dotnetRunMessages": true,
-    //  "launchBrowser": true,
-    //  "applicationUrl": "http://localhost:7200", // Local URL
-    //  "environmentVariables": {
-    //    "ASPNETCORE_ENVIRONMENT": "Development"
-    //  }
-    //},
+    "SamosaGhar": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:7200"
+    },
     "SamosaGhar_Live": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://samosaghar.bsite.net/", // Live URL for testing
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://gharsamosa.bsite.net/"
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:59590/",
+      "sslPort": 44371
     }
   }
 }
