@@ -389,7 +389,89 @@
 
 //// Run the app
 //app.Run();
-using CloudinaryDotNet;
+//using CloudinaryDotNet;
+//using SamosaGhar.Config;
+
+//var builder = WebApplication.CreateBuilder(args);
+
+//// Add appsettings.json configuration
+//builder.Configuration
+//    .SetBasePath(Directory.GetCurrentDirectory())
+//    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+//    .AddEnvironmentVariables();
+
+//// Add services to the container
+//builder.Services.AddControllers();
+
+//// Register MongoDBConfig as a singleton service
+//builder.Services.AddSingleton(sp =>
+//{
+//    var configSection = builder.Configuration.GetSection("MongoDB");
+//    string connectionString = configSection["ConnectionString"];
+//    string databaseName = configSection["DatabaseName"];
+//    return new MongoDBConfig(connectionString, databaseName);
+//});
+
+//// Register Cloudinary as a singleton service
+//builder.Services.AddSingleton(sp =>
+//{
+//    var configSection = builder.Configuration.GetSection("Cloudinary");
+//    var cloudinaryAccount = new Account(
+//        configSection["CloudName"],
+//        configSection["ApiKey"],
+//        configSection["ApiSecret"]
+//    );
+//    return new Cloudinary(cloudinaryAccount);
+//});
+
+//// CORS configuration
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactApp",
+//        policy =>
+//        {
+//            // Allow requests based on the environment
+//            if (builder.Environment.IsDevelopment())
+//            {
+//                policy.WithOrigins("http://localhost:3000")  // Local React app
+//                      .AllowAnyHeader()
+//                      .AllowAnyMethod();
+//            }
+//            else
+//            {
+//                policy.WithOrigins("https://samosagharreact.vercel.app")  // Live React app URL
+//                      .AllowAnyHeader()
+//                      .AllowAnyMethod();
+//            }
+//        });
+//});
+
+//// Set the application to listen on port 7200
+//builder.WebHost.UseUrls("http://localhost:7200");
+
+//var app = builder.Build();
+
+//// Enable CORS
+//app.UseCors("AllowReactApp");
+
+//// Configure the HTTP request pipeline
+//app.UseHttpsRedirection();
+//app.UseAuthorization();
+
+//app.MapControllers();
+
+//// Welcome message at root URL
+//app.MapGet("/", () => Results.Content(
+//    "<h1 style='text-align:center;color:green;'>Welcome to Samosa Ghar</h1>",
+//    "text/html"
+//));
+
+//// Run the app
+//app.Run();
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using MongoDB.Driver;
 using SamosaGhar.Config;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -404,7 +486,7 @@ builder.Configuration
 builder.Services.AddControllers();
 
 // Register MongoDBConfig as a singleton service
-builder.Services.AddSingleton(sp =>
+builder.Services.AddSingleton<MongoDBConfig>(sp =>
 {
     var configSection = builder.Configuration.GetSection("MongoDB");
     string connectionString = configSection["ConnectionString"];
@@ -412,38 +494,15 @@ builder.Services.AddSingleton(sp =>
     return new MongoDBConfig(connectionString, databaseName);
 });
 
-// Register Cloudinary as a singleton service
-builder.Services.AddSingleton(sp =>
-{
-    var configSection = builder.Configuration.GetSection("Cloudinary");
-    var cloudinaryAccount = new Account(
-        configSection["CloudName"],
-        configSection["ApiKey"],
-        configSection["ApiSecret"]
-    );
-    return new Cloudinary(cloudinaryAccount);
-});
-
 // CORS configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy =>
-        {
-            // Allow requests based on the environment
-            if (builder.Environment.IsDevelopment())
-            {
-                policy.WithOrigins("http://localhost:3000")  // Local React app
-                      .AllowAnyHeader()
-                      .AllowAnyMethod();
-            }
-            else
-            {
-                policy.WithOrigins("https://samosagharreact.vercel.app")  // Live React app URL
-                      .AllowAnyHeader()
-                      .AllowAnyMethod();
-            }
-        });
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Update as needed
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 // Set the application to listen on port 7200
