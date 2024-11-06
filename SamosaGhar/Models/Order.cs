@@ -14,7 +14,7 @@ namespace SamosaGhar.Models
         public string UserId { get; set; } // UserId (Mobile number of the user)
         public List<OrderItem> Items { get; set; } // List of order items
         public Address Address { get; set; } // Shipping address, which also contains UserId
-        public string PaymentMethod { get; set; } // Payment method (e.g., "Credit Card", "Cash")
+        //public string PaymentMethod { get; set; } // Payment method (e.g., "Credit Card", "Cash")
         public decimal TotalAmount { get; set; } // Total amount for the order
         public DateTime OrderDate { get; set; } = DateTime.UtcNow; // Order date
     }
