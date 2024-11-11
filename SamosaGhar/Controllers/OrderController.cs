@@ -101,5 +101,35 @@ namespace SamosaGhar.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        // Get Order History for a User
+        [HttpGet("orderhistory/{userId}")]
+        public async Task<IActionResult> GetOrderHistory(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("UserId (mobile number) is required.");
+            }
+
+            try
+            {
+                // Query orders by UserId (mobile number)
+                var filter = Builders<Order>.Filter.Eq(o => o.UserId, userId);
+                var orders = await _orderCollection.Find(filter).ToListAsync();
+
+                if (orders == null || orders.Count == 0)
+                {
+                    return NotFound(new { message = "No orders found for the given UserId." });
+                }
+
+                return Ok(orders);  // Return the list of orders
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error retrieving order history: {ex.Message}");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
