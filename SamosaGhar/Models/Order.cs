@@ -10,7 +10,7 @@ namespace SamosaGhar.Models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
          public ObjectId Id { get; set; } // MongoDB will automatically generate this field
-
+        public string Email {  get; set; }
         public string UserId { get; set; } // UserId (Mobile number of the user)
         public List<OrderItem> Items { get; set; } // List of order items
         public Address Address { get; set; } // Shipping address, which also contains UserId
