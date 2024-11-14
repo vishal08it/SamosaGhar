@@ -9,14 +9,17 @@ namespace SamosaGhar.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-         public ObjectId Id { get; set; } // MongoDB will automatically generate this field
-        public string Email {  get; set; }
+        public ObjectId Id { get; set; } // MongoDB will automatically generate this field
+
+        public string OrderId { get; set; } // Unique Order ID
+
+        public string Email { get; set; }
         public string UserId { get; set; } // UserId (Mobile number of the user)
         public List<OrderItem> Items { get; set; } // List of order items
-        public Address Address { get; set; } // Shipping address, which also contains UserId
-        //public string PaymentMethod { get; set; } // Payment method (e.g., "Credit Card", "Cash")
+        public Address Address { get; set; } // Shipping address
         public decimal TotalAmount { get; set; } // Total amount for the order
         public DateTime OrderDate { get; set; } = DateTime.UtcNow; // Order date
+        public string Status { get; set; } = "New"; // Default status is 'New'
     }
 
     public class OrderItem
