@@ -534,13 +534,13 @@ namespace SamosaGhar.Controllers
                 }
 
                 // Check if the order is already placed
-                if (existingOrder.Status == "Placed")
+                if (existingOrder.Status == "Out for delivery")
                 {
-                    return BadRequest(new { message = "Order is already Placed." });
+                    return BadRequest(new { message = "Order is Out for delivery." });
                 }
 
                 // Update the order status to 'Placed'
-                var update = Builders<Order>.Update.Set(o => o.Status, "Placed");
+                var update = Builders<Order>.Update.Set(o => o.Status, "Out for delivery");
 
                 // Execute the update in MongoDB
                 var result = await _orderCollection.UpdateOneAsync(filter, update);
@@ -548,13 +548,13 @@ namespace SamosaGhar.Controllers
                 // If no document was modified, it means the order wasn't found or already updated
                 if (result.ModifiedCount == 0)
                 {
-                    return NotFound(new { message = "Order not found or already Placed." });
+                    return NotFound(new { message = "Order not found or  delivered." });
                 }
 
                 // Send placed order email to the customer
                 SendOrderPlacedEmail(existingOrder);
 
-                return Ok(new { message = "Order marked as Placed successfully." });
+                return Ok(new { message = "Order Out for delivery." });
             }
             catch (Exception ex)
             {
@@ -587,7 +587,7 @@ namespace SamosaGhar.Controllers
             // Construct the complete email body
             var emailBody = $@"
         <h2>Hello {order.Address.FullName},</h2>
-        <p>Your order has been placed successfully! Below are your order details:</p>
+        <p>Your order has been Out for delivery! Below are your order details:</p>
         {itemDetails}
         <p><strong>Total Amount:</strong> ₹{order.TotalAmount}</p>
         <p>Thank you for choosing Samosa Ghar!<br>Best Regards,<br>Samosa Ghar Team</p>";
@@ -595,7 +595,7 @@ namespace SamosaGhar.Controllers
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(_configuration["EmailSettings:Email"]),
-                Subject = "Order Placed - Samosa Ghar",
+                Subject = "Out for delivery - Samosa Ghar",
                 Body = emailBody,
                 IsBodyHtml = true,
             };
@@ -612,6 +612,157 @@ namespace SamosaGhar.Controllers
                 Console.WriteLine($"Failed to send placed order email to customer: {ex.Message}");
             }
         }
+        [HttpGet("outfordelivery")]
+        public async Task<IActionResult> GetOutfordeliveryOrder()
+        {
+            try
+            {
 
+                var filter = Builders<Order>.Filter.Eq(o => o.Status, "Out for delivery");
+
+                var orders = await _orderCollection.Find(filter).ToListAsync();
+
+
+                if (orders == null || orders.Count == 0)
+                {
+                    return NotFound(new { message = "No  order found." });
+                }
+
+
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception and return an error message
+                Console.WriteLine($"Error retrieving new orders: {ex.Message}");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+        [HttpPatch("delivered/{orderId}")]
+        public async Task<IActionResult> Delevered(string orderId)
+        {
+            try
+            {
+                // Validate the orderId format
+                if (string.IsNullOrEmpty(orderId) || orderId.Length != 5) // Example validation for 5-character orderId
+                {
+                    return BadRequest(new { message = "Invalid order ID format. The order ID should be 5 characters long." });
+                }
+
+                // Build the filter to find the order by its orderId
+                var filter = Builders<Order>.Filter.Eq(o => o.OrderId, orderId);
+
+                // Find the order to ensure it exists
+                var existingOrder = await _orderCollection.Find(filter).FirstOrDefaultAsync();
+                if (existingOrder == null)
+                {
+                    return NotFound(new { message = "Order not found." });
+                }
+
+                // Check if the order is already placed
+                if (existingOrder.Status == "Delivered")
+                {
+                    return BadRequest(new { message = "Order Delivered." });
+                }
+
+                // Update the order status to 'Placed'
+                var update = Builders<Order>.Update.Set(o => o.Status, "Delivered");
+
+                // Execute the update in MongoDB
+                var result = await _orderCollection.UpdateOneAsync(filter, update);
+
+                // If no document was modified, it means the order wasn't found or already updated
+                if (result.ModifiedCount == 0)
+                {
+                    return NotFound(new { message = "Order not found or  delivered." });
+                }
+
+                // Send placed order email to the customer
+                SendOrderDeliveredEmail(existingOrder);
+
+                return Ok(new { message = "Order Delivered successfully." });
+            }
+            catch (Exception ex)
+            {
+                // Log and return the exception message
+                Console.WriteLine($"Error processing order: {ex.Message}");
+                return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+            }
+        }
+
+        // Send placed order email to the customer
+        private void SendOrderDeliveredEmail(Order order)
+        {
+            using var smtpClient = new SmtpClient(_configuration["EmailSettings:SmtpServer"])
+            {
+                Port = int.Parse(_configuration["EmailSettings:Port"]),
+                Credentials = new NetworkCredential(_configuration["EmailSettings:Email"], _configuration["EmailSettings:Password"]),
+                EnableSsl = true,
+            };
+
+            // Generate the HTML for each item in the order
+            var itemDetails = string.Join("\n", order.Items.Select(item =>
+                $@"<div>
+            <img src='{item.ImageUrl}' alt='{item.Name}' width='100' />
+            <p><strong>Item:</strong> {item.Name}</p>
+            <p><strong>Quantity:</strong> {item.Quantity}</p>
+            <p><strong>Total Price:</strong> ₹{(item.Price * item.Quantity):F2}</p>
+          </div>"
+            ));
+
+            // Construct the complete email body
+            var emailBody = $@"
+        <h2>Hello {order.Address.FullName},</h2>
+        <p>Your order has been Delivered successfully! Below are your order details:</p>
+        {itemDetails}
+        <p><strong>Total Amount:</strong> ₹{order.TotalAmount}</p>
+        <p>Thank you for choosing Samosa Ghar!<br>Best Regards,<br>Samosa Ghar Team</p>";
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(_configuration["EmailSettings:Email"]),
+                Subject = "Delivered successfully - Samosa Ghar",
+                Body = emailBody,
+                IsBodyHtml = true,
+            };
+
+            mailMessage.To.Add(order.Email);
+
+            // Send email with error handling
+            try
+            {
+                smtpClient.Send(mailMessage);
+            }
+            catch (SmtpException ex)
+            {
+                Console.WriteLine($"Failed to send placed order email to customer: {ex.Message}");
+            }
+        }
+        [HttpGet("deleverd")]
+        public async Task<IActionResult> GetDeleveredOrder()
+        {
+            try
+            {
+
+                var filter = Builders<Order>.Filter.Eq(o => o.Status, "Delivered");
+
+                var orders = await _orderCollection.Find(filter).ToListAsync();
+
+
+                if (orders == null || orders.Count == 0)
+                {
+                    return NotFound(new { message = "No  order found." });
+                }
+
+
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception and return an error message
+                Console.WriteLine($"Error retrieving new orders: {ex.Message}");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
