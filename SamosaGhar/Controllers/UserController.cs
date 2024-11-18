@@ -43,22 +43,7 @@ namespace SamosaGhar.Controllers
             return Ok(new { message = "Login successful", user = user });
         }
 
-        //[HttpPost("register")]
-        //public IActionResult Register([FromBody] User newUser)
-        //{
-        //    var existingUser = _users.Find(u => u.MobileNumber == newUser.MobileNumber).FirstOrDefault();
-        //    if (existingUser != null)
-        //    {
-        //        return Conflict(new { message = "User already exists" });
-        //    }
-
-        //    _users.InsertOne(newUser);
-        //    return Ok(new { message = "User registered successfully" });
-        //}
-        
-
-
-[HttpPost("register")]
+ [HttpPost("register")]
     public IActionResult Register([FromBody] User newUser)
     {
         // Validate required fields
@@ -71,7 +56,7 @@ namespace SamosaGhar.Controllers
         }
 
         // Check if user already exists
-        var existingUser = _users.Find(u => u.MobileNumber == newUser.MobileNumber).FirstOrDefault();
+        var existingUser = _users.Find(u => u.MobileNumber == newUser.MobileNumber && u.Email==newUser.Email).FirstOrDefault();
         if (existingUser != null)
         {
             return Conflict(new { message = "User already exists" });
@@ -131,6 +116,77 @@ namespace SamosaGhar.Controllers
                 throw new Exception("Failed to send email.", ex);
             }
         }
+        [HttpPost("resetpassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
+        {
+            if (string.IsNullOrEmpty(resetPasswordRequest.NewPassword) ||
+                (string.IsNullOrEmpty(resetPasswordRequest.Email) && string.IsNullOrEmpty(resetPasswordRequest.MobileNumber)))
+            {
+                return BadRequest(new { message = "New Password is required, and either Email or Mobile Number must be provided." });
+            }
 
+            // Build query filter for email or mobile number
+            var filter = Builders<User>.Filter.Or(
+                Builders<User>.Filter.Eq(u => u.Email, resetPasswordRequest.Email),
+                Builders<User>.Filter.Eq(u => u.MobileNumber, resetPasswordRequest.MobileNumber)
+            );
+
+            // Find user
+            var user = await _users.Find(filter).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found with the provided Email or Mobile Number." });
+            }
+
+            // Update the password in the database (plain text)
+            var update = Builders<User>.Update.Set(u => u.Password, resetPasswordRequest.NewPassword);
+            await _users.UpdateOneAsync(filter, update);
+
+            // Send email after password reset
+            try
+            {
+                SendPasswordResetEmail(user.Email, user.Name, user.MobileNumber);
+            }
+            catch (Exception ex)
+            {
+                // Handle email sending failure but still return success for password reset
+                return Ok(new { message = "Password reset successful, but failed to send email notification.", error = ex.Message });
+            }
+
+            return Ok(new { message = "Password reset successful. Please check your email for confirmation." });
+        }
+
+
+        // Email function for password reset
+        private void SendPasswordResetEmail(string userEmail, string userName, string MobileNumber)
+        {
+            using var smtpClient = new SmtpClient(_emailSettings.SmtpServer)
+            {
+                Port = _emailSettings.Port,
+                Credentials = new NetworkCredential(_emailSettings.Email, _emailSettings.Password),
+                EnableSsl = true,
+            };
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(_emailSettings.Email),
+                Subject = "Password Reset Confirmation - Samosa Ghar",
+                Body = $"Hello {userName},\n\nYour password for the mobile number {MobileNumber} has been successfully reset.\n\n" +
+                       "If you did not request this change, please contact our support team immediately.\n\n" +
+                       "Best Regards,\nSamosa Ghar Team",
+                IsBodyHtml = false,
+            };
+
+            mailMessage.To.Add(userEmail);
+
+            try
+            {
+                smtpClient.Send(mailMessage);
+            }
+            catch (SmtpException ex)
+            {
+                throw new Exception("Failed to send email.", ex);
+            }
+        }
     }
 }
