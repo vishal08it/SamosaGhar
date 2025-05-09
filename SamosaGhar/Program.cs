@@ -1,7 +1,5 @@
 
-
 using CloudinaryDotNet;
-using Microsoft.Extensions.Logging;
 using SamosaGhar.Config;
 using SamosaGhar.Models;
 
@@ -10,10 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 
-// Load EmailSettings from appsettings.json
+// Add EmailSettings configuration from appsettings.json
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
-// Configure Cloudinary
+// Register other services like MongoDB and Cloudinary as usual
 var cloudinaryConfig = builder.Configuration.GetSection("Cloudinary");
 var cloudinaryAccount = new Account(
     cloudinaryConfig["CloudName"],
@@ -22,7 +20,7 @@ var cloudinaryAccount = new Account(
 );
 builder.Services.AddSingleton(new Cloudinary(cloudinaryAccount));
 
-// Configure MongoDB
+// Additional services and configurations
 builder.Services.AddSingleton<MongoDBConfig>(sp =>
 {
     var configSection = builder.Configuration.GetSection("MongoDB");
@@ -31,51 +29,32 @@ builder.Services.AddSingleton<MongoDBConfig>(sp =>
     return new MongoDBConfig(connectionString, databaseName);
 });
 
-// Configure CORS
+// Configure CORS, etc.
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins", policy =>
+    options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:3000",
-            "https://samosagharreact.vercel.app"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:3000", "https://samosagharreact.vercel.app")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
-// Enable logging
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
-
-// Force HTTPS in hosted environments
-builder.WebHost.UseUrls("http://localhost:7200"); // Change port as needed
+// Set the application to listen on port 7200
+builder.WebHost.UseUrls("http://localhost:7200");
 
 var app = builder.Build();
 
-// Middleware pipeline
-app.UseHttpsRedirection(); // Redirect HTTP to HTTPS
-app.UseStaticFiles();      // Serve static files if needed
-app.UseCors("AllowAllOrigins");
+// Enable CORS
+app.UseCors("AllowReactApp");
+
+// Configure the HTTP request pipeline
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
-// Global exception handler
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "text/plain";
-        await context.Response.WriteAsync("An unexpected error occurred.");
-    });
-});
-
-// Map endpoints
 app.MapControllers();
 
-// Root welcome message
+// Welcome message at root URL
 app.MapGet("/", () => Results.Content(
     "<h1 style='text-align:center;color:green;'>Welcome to Samosa Ghar</h1>",
     "text/html"
